@@ -40,8 +40,9 @@ def test_model(model_path,dataset_path,batch_size=100):
         c = (predicted == labels).squeeze()
         #pdb.set_trace()
         for i in range(len(predicted)):
-            label = labels[i]
-            class_correct[label] += c[i]
+            label = int(labels[i])
+            if c[i]:
+              class_correct[label] += 1 
             class_total[label] += 1
         del images
         del labels
@@ -51,6 +52,7 @@ def test_model(model_path,dataset_path,batch_size=100):
         for i in range(len(dset_classes)):
             print('Accuracy of %5s : %2d %%' % (
             dset_classes[i], 100 * class_correct[i] / class_total[i]))
+
     accuracy=np.sum(class_correct)*100/np.sum(class_total)
     print('Accuracy: ' +str(accuracy))
     return accuracy
