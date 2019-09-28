@@ -26,15 +26,17 @@ import pdb
 def test_seq_task_performance(previous_model_path,current_model_path,dataset_path,check=0):
     if check:
         check_current_model_ft=torch.load(current_model_path)
-        current_model_ft=check_current_model_ft['model']
+        current_model_ft=check_current_model_ft
     else:
          current_model_ft=torch.load(current_model_path)
+         #current_model_ft=current_model_ft["model"]
         
     previous_model_ft=torch.load(previous_model_path)
+    #previous_model_ft=previous_model_ft["model"]
        
-    last_layer_index=str(len(previous_model_ft.classifier._modules)-1)
+    last_layer_index=str(len(previous_model_ft["model"].classifier._modules)-1)
     
-    current_model_ft.classifier._modules[last_layer_index] = previous_model_ft.classifier._modules[last_layer_index]
+    current_model_ft["model"].classifier._modules[last_layer_index] = previous_model_ft["model"].classifier._modules[last_layer_index]
     
     #pdb.set_trace()
     temp_path='tobetested.pth.tar'

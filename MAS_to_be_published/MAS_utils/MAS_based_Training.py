@@ -18,6 +18,9 @@ import shutil
 from torch.utils.data import DataLoader
 #end of imports
 #
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 class Weight_Regularized_SGD(optim.SGD):
     r"""Implements SGD training with importance params regulization. IT inherents stochastic gradient descent (optionally with momentum).
     Nesterov momentum is based on the formula from
@@ -71,8 +74,8 @@ class Weight_Regularized_SGD(optim.SGD):
                     
                     curr_wegiht_val=p.data
                     #move the tensors to cuda
-                    init_val=init_val.cuda()
-                    omega=omega.cuda()
+                    init_val=init_val.to(device)
+                    omega=omega.to(device)
                     
                     #get the difference
                     weight_dif=curr_wegiht_val.add(-1,init_val)
@@ -159,7 +162,7 @@ class MAS_Omega_update(optim.SGD):
                     zero=torch.FloatTensor(p.data.size()).zero_()
                     #get parameter omega
                     omega=reg_param.get('omega')
-                    omega=omega.cuda()
+                    omega=omega.to(device)
     
                     
                     #sum up the magnitude of the gradient
@@ -170,7 +173,7 @@ class MAS_Omega_update(optim.SGD):
                     omega=omega.add(unreg_dp.abs_())
                     #update omega value
                     omega=omega.div(curr_size)
-                    if omega.equal(zero.cuda()):
+                    if omega.equal(zero.to(device)):
                         print('omega after zero')
 
                     reg_param['omega']=omega
@@ -229,7 +232,7 @@ class MAS_Omega_Vector_Grad_update(optim.SGD):
                     
                     zero=torch.FloatTensor(p.data.size()).zero_()
                     omega=reg_param.get('omega')
-                    omega=omega.cuda()
+                    omega=omega.to(device)
     
                     
                     #get the magnitude of the gradient
@@ -238,7 +241,7 @@ class MAS_Omega_Vector_Grad_update(optim.SGD):
                             w=reg_param.get('w')
                         else:
                             w=torch.FloatTensor(p.data.size()).zero_()
-                        w=w.cuda()
+                        w=w.to(device)
                         w=w.add(unreg_dp.abs_())
                         reg_param['w']=w
                     else:
@@ -250,9 +253,9 @@ class MAS_Omega_Vector_Grad_update(optim.SGD):
                         omega=omega.mul(prev_size)
                         omega=omega.add(w)
                         omega=omega.div(curr_size)
-                        reg_param['w']=zero.cuda()
+                        reg_param['w']=zero.to(device)
                         
-                        if omega.equal(zero.cuda()):
+                        if omega.equal(zero.to(device)):
                             print('omega after zero')
 
                     reg_param['omega']=omega
@@ -315,8 +318,8 @@ def train_model(model, criterion, optimizer, lr_scheduler,lr,dset_loaders,dset_s
                 
                 # wrap them in Variable
                 if use_gpu:
-                    inputs, labels = Variable(inputs.cuda()), \
-                        Variable(labels.cuda())
+                    inputs, labels = Variable(inputs.to(device)), \
+                        Variable(labels.to(device))
                 else:
                     inputs, labels = Variable(inputs), Variable(labels)
 
@@ -335,7 +338,7 @@ def train_model(model, criterion, optimizer, lr_scheduler,lr,dset_loaders,dset_s
                     optimizer.step(model.reg_params)
 
                 # statistics
-                running_loss += loss.data[0]
+                running_loss += loss.data.item()
                 running_corrects += torch.sum(preds == labels.data)
 
             epoch_loss = running_loss / dset_sizes[phase]
@@ -410,8 +413,8 @@ def compute_importance_l2(model, optimizer, lr_scheduler,dset_loaders,use_gpu):
                 inputs=inputs.view(inputs.size(0),inputs.size(2))            
             # wrap them in Variable
             if use_gpu:
-                inputs, labels = Variable(inputs.cuda()), \
-                Variable(labels.cuda())
+                inputs, labels = Variable(inputs.to(device)), \
+                Variable(labels.to(device))
             else:
                 inputs, labels = Variable(inputs), Variable(labels)
 
@@ -426,7 +429,7 @@ def compute_importance_l2(model, optimizer, lr_scheduler,dset_loaders,use_gpu):
         
             #compute the L2 norm of output 
             Target_zeros=torch.zeros(outputs.size())
-            Target_zeros=Target_zeros.cuda()
+            Target_zeros=Target_zeros.to(device)
             Target_zeros=Variable(Target_zeros)
             #note no avereging is happening here
             loss = torch.nn.MSELoss(size_average=False)
@@ -478,8 +481,8 @@ def compute_importance(model, optimizer, lr_scheduler,dset_loaders,use_gpu):
 
             # wrap them in Variable
             if use_gpu:
-                inputs, labels = Variable(inputs.cuda()), \
-                Variable(labels.cuda())
+                inputs, labels = Variable(inputs.to(device)), \
+                Variable(labels.to(device))
             else:
                 inputs, labels = Variable(inputs), Variable(labels)
 
@@ -494,7 +497,7 @@ def compute_importance(model, optimizer, lr_scheduler,dset_loaders,use_gpu):
            #compute the L1 norm of the function output
         
             Target_zeros=torch.zeros(outputs.size())
-            Target_zeros=Target_zeros.cuda()
+            Target_zeros=Target_zeros.to(device)
             Target_zeros=Variable(Target_zeros,requires_grad=False)
        
             loss = torch.nn.L1Loss(size_average=False)
@@ -544,8 +547,8 @@ def compute_importance_gradient_vector(model, optimizer, lr_scheduler,dset_loade
 
             # wrap them in Variable
             if use_gpu:
-                inputs, labels = Variable(inputs.cuda()), \
-                Variable(labels.cuda())
+                inputs, labels = Variable(inputs.to(device)), \
+                Variable(labels.to(device))
             else:
                 inputs, labels = Variable(inputs), Variable(labels)
 
@@ -559,7 +562,7 @@ def compute_importance_gradient_vector(model, optimizer, lr_scheduler,dset_loade
            
             for output_i in range(0,outputs.size(1)):
                 Target_zeros=torch.zeros(outputs.size())
-                Target_zeros=Target_zeros.cuda()
+                Target_zeros=Target_zeros.to(device)
                 Target_zeros[:,output_i]=1
                 Target_zeros=Variable(Target_zeros,requires_grad=False)
                 targets=torch.sum(outputs*Target_zeros)
@@ -632,9 +635,9 @@ def accumelate_reg_params(model,freeze_layers=[]):
                 reg_param=reg_params.get(param)
                 print('restoring previous omega',name)
                 prev_omega=reg_param.get('prev_omega')
-                prev_omega=prev_omega.cuda()
+                prev_omega=prev_omega.to(device)
                 
-                new_omega=(reg_param.get('omega')).cuda()
+                new_omega=(reg_param.get('omega')).to(device)
                 acc_omega=torch.add(prev_omega,new_omega)
                 
                 del reg_param['prev_omega']

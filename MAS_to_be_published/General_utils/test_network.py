@@ -14,11 +14,15 @@ import os
 import shutil
 from ImageFolderTrainVal import *
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 import pdb
 def test_model(model_path,dataset_path,batch_size=100):
     model=torch.load(model_path)
+    model=model["model"]
+    #pdb.set_trace()
     model.eval()
-    model=model.cuda()
+    model=model.to(device)
     dsets = torch.load(dataset_path)
     dset_loaders = {x: torch.utils.data.DataLoader(dsets[x],batch_size ,
                                                    shuffle=True, num_workers=4)
@@ -29,9 +33,9 @@ def test_model(model_path,dataset_path,batch_size=100):
     class_total = list(0. for i in range(len(dset_classes)))
     for data in dset_loaders['val']:
         images, labels = data
-        images=images.cuda()
+        images=images.to(device)
         images=images.squeeze()
-        labels=labels.cuda()
+        labels=labels.to(device)
         outputs = model(Variable(images))
         _, predicted = torch.max(outputs.data, 1)
         c = (predicted == labels).squeeze()
@@ -54,8 +58,9 @@ def test_model(model_path,dataset_path,batch_size=100):
 
 def test_model_lwtaDeactive(model_path,dataset_path,batch_size=100):
     model=torch.load(model_path)
+    model=model["model"]
     model=remove_lwta(model )
-    model=model.cuda()
+    model=model.to(device)
     dsets = torch.load(dataset_path)
     dset_loaders = {x: torch.utils.data.DataLoader(dsets[x],batch_size ,
                                                    shuffle=True, num_workers=4)
@@ -66,8 +71,8 @@ def test_model_lwtaDeactive(model_path,dataset_path,batch_size=100):
     class_total = list(0. for i in range(len(dset_classes)))
     for data in dset_loaders['val']:
         images, labels = data
-        images=images.cuda()
-        labels=labels.cuda()
+        images=images.to(device)
+        labels=labels.to(device)
         outputs = model(Variable(images))
         _, predicted = torch.max(outputs.data, 1)
         c = (predicted == labels).squeeze()
@@ -90,8 +95,8 @@ def test_model_lwtaDeactive(model_path,dataset_path,batch_size=100):
 
 def test_model_sparce(model_path,dataset_path,batch_size=100):
     model=torch.load(model_path)
-    
-    model=model.cuda()
+    model=model["model"] 
+    model=model.to(device)
     
     dsets = torch.load(dataset_path)
     dset_loaders = {x: torch.utils.data.DataLoader(dsets[x],batch_size ,
@@ -103,9 +108,9 @@ def test_model_sparce(model_path,dataset_path,batch_size=100):
     class_total = list(0. for i in range(len(dset_classes)))
     for data in dset_loaders['val']:
         images, labels = data
-        images=images.cuda()
+        images=images.to(device)
         images=images.squeeze()
-        labels=labels.cuda()
+        labels=labels.to(device)
         outputs,x = model(Variable(images))
         _, predicted = torch.max(outputs.data, 1)
         c = (predicted == labels).squeeze()
@@ -149,8 +154,8 @@ def remove_lwta(LWTA_model ):
 def test_model_animals(model_path,dataset_path,batch_size=4,correspond=[280, 291, 292, 293, 296]):
     
     model=torch.load(model_path)
-    
-    model=model.cuda()
+    model=model["model"] 
+    model=model.to(device)
     model.eval()
     dsets = torch.load(dataset_path)
     dset_loaders = {x: torch.utils.data.DataLoader(dsets[x],batch_size ,
@@ -162,8 +167,8 @@ def test_model_animals(model_path,dataset_path,batch_size=4,correspond=[280, 291
     class_total = list(0. for i in range(len(dset_classes)))
     for data in dset_loaders['val']:
         images, labels = data
-        images=images.cuda()
-        labels=labels.cuda()
+        images=images.to(device)
+        labels=labels.to(device)
        
         outputs = model(Variable(images))
         _, predicted = torch.max(outputs.data, 1)
