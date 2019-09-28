@@ -50,8 +50,6 @@ def MAS(dataset_path,previous_task_model_path,exp_dir,data_dir,reg_sets,reg_lamb
     dset_sizes = {x: len(dsets[x]) for x in ['train', 'val']}
     dset_classes = dsets['train'].classes
     model_ft = torch.load(previous_task_model_path)
-    # updated for pytorch 1.x
-    model_ft = model_ft["model"] 
     use_gpu = torch.cuda.is_available()
 
     #update omega value
@@ -113,9 +111,6 @@ def MAS_sequence(dataset_path,pevious_pathes,previous_task_model_path,exp_dir,da
     use_gpu = torch.cuda.is_available()
   
     model_ft = torch.load(previous_task_model_path)
-    # for pytorch 1.x
-    model_ft = model_ft["model"]
-    #pdb.set_trace()  
     
     if b1:
         update_batch_size=1
@@ -171,7 +166,6 @@ def MAS_Omega_Acuumelation(dataset_path,previous_task_model_path,exp_dir,data_di
     use_gpu = torch.cuda.is_available()
    
     model_ft = torch.load(previous_task_model_path)
-    model_ft = model_ft["model"]
         
     if b1:
         #compute the importance with batch size of 1, to mimic the online setting
@@ -278,7 +272,6 @@ def update_sequence_MAS_weights(data_dirs,reg_sets,previous_models,model_ft,batc
     last_layer_index=str(len(model_ft.classifier._modules)-1)
     for model_path in previous_models:
         pre_model=torch.load(model_path)
-        pre_model=pre_model["model"]
         #get previous task head
         model_ft.classifier._modules[last_layer_index] = pre_model.classifier._modules[last_layer_index]
 

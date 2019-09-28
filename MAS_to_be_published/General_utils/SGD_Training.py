@@ -95,7 +95,7 @@ def train_model(model, criterion, optimizer, lr_scheduler,lr,dset_loaders,dset_s
                 running_corrects += torch.sum(preds == labels.data)
 
             epoch_loss = running_loss / dset_sizes[phase]
-            epoch_acc = running_corrects / dset_sizes[phase]
+            epoch_acc = running_corrects.to(dtype=torch.float) / float(dset_sizes[phase])
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))

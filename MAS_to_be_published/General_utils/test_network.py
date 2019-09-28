@@ -19,7 +19,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import pdb
 def test_model(model_path,dataset_path,batch_size=100):
     model=torch.load(model_path)
-    model=model["model"]
     #pdb.set_trace()
     model.eval()
     model=model.to(device)
